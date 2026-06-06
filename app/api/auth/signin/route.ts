@@ -19,13 +19,13 @@ export async function POST(req: Request) {
     }
 
     if (!user.password) {
-  return NextResponse.json(
-    {
-      error:
-        "This account uses Google Sign-In. Please continue with Google.",
-    },
-    { status: 400 }
-  );
+    return NextResponse.json(
+        {
+            error:
+                "This account uses Google Sign-In. Please continue with Google.",
+        },
+        { status: 400 }
+    );
 }
 
 const isMatch = await bcrypt.compare(
@@ -39,13 +39,6 @@ if (!isMatch) {
     { status: 401 }
   );
 }
-
-    if (!isMatch) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
 
     const userData = {
       _id: user._id,

@@ -120,9 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
        password
       )
-
-      // Get Firebase ID token
-     const token = await userCredential.user.getIdToken()
+   
 
       // Send verified token to backend
      const res = await fetch("/api/auth/signin", {
