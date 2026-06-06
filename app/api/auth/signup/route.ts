@@ -26,9 +26,11 @@ export async function POST(req: Request) {
     }
 
     const user = await User.create({
-      _id: firebaseUid,
       name,
+      username: name,
+      full_name: name,
       email,
+      firebaseUid,
       monthlyCarbon: 0,
       totalScanned: 0,
       joinedAt: new Date().toISOString(),
