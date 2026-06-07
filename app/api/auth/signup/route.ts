@@ -19,6 +19,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
+    if (typeof email !== 'string' || typeof name !== 'string' || typeof firebaseUid !== 'string') {
+      return NextResponse.json({ error: "Invalid input type" }, { status: 400 })
+    }
+
     const existing = await User.findOne({ email })
     if (existing) {
       console.warn("⚠️ User already exists:", email)
