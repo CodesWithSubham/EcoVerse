@@ -1,0 +1,6 @@
+node_modules
+.next
+build
+firebase-functions-sync-ts
+firebase-functions-sync-prisma
+firebase-functions-sync-ts-backup
