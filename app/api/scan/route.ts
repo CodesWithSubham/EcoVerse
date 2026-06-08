@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       { error: "Unauthorized" },
       { status: 401 }
     )
-  } // ✅ Fallback to dev email if no JWT session exists
+  }
 
   if (!barcode) {
     return NextResponse.json({ error: "Barcode missing" }, { status: 400 })
