@@ -6,7 +6,34 @@
   EcoVerse helps users understand the environmental impact of products through barcode scanning, carbon footprint analysis, recyclability insights, eco-points, and community driven sustainability challenges.
 </p>
 
+## Table of Contents
 
+* [Overview](#overview)
+* [Features](#features)
+
+  * [Barcode Scanning](#barcode-scanning)
+  * [Carbon Footprint Analysis](#carbon-footprint-analysis)
+  * [Recyclability Insights](#recyclability-insights)
+  * [Rewards System](#rewards-system)
+  * [Community Features](#community-features)
+  * [Analytics Dashboard](#analytics-dashboard)
+* [Tech Stack](#tech-stack)
+* [Architecture Overview](#architecture-overview)
+
+  * [Application Flow](#application-flow)
+  * [Core Components](#core-components)
+* [Project Structure](#project-structure)
+* [Application Routes](#application-routes)
+* [API Endpoints](#api-endpoints)
+* [Getting Started](#getting-started)
+
+  * [Prerequisites](#prerequisites)
+  * [Clone the Repository](#clone-the-repository)
+  * [Install Dependencies](#install-dependencies)
+  * [Configure Environment Variables](#configure-environment-variables)
+  * [Start Development Server](#start-development-server)
+* [Contributors](#contributors)
+* [License](#license)
 
 ## Overview
 
