@@ -1,4 +1,4 @@
-import argparse
+import sys
 
 def calculate_carbon_footprint(electricity_kwh, vehicle_km):
     """
@@ -6,6 +6,10 @@ def calculate_carbon_footprint(electricity_kwh, vehicle_km):
     - Electricity: ~0.85 kg CO2 per kWh
     - Average Car: ~0.14 kg CO2 per km
     """
+    # Fix: Reject negative inputs as requested by CodeRabbit
+    if electricity_kwh < 0 or vehicle_km < 0:
+        raise ValueError("Electricity usage and vehicle distance must be non-negative.")
+
     ELEC_EMISSION_FACTOR = 0.85
     CAR_EMISSION_FACTOR = 0.14
 
@@ -31,8 +35,13 @@ def main():
         print(f"Total Carbon Footprint: {total:.2f} kg CO2")
         print("-" * 40)
         
-    except ValueError:
-        print("❌ Error: Please enter valid numeric values.")
+    except ValueError as e:
+        # Fix: Catch specific error and exit with a non-zero code
+        if str(e).startswith("could not convert string to float"):
+            print("❌ Error: Please enter valid numeric values.")
+        else:
+            print(f"❌ Error: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
