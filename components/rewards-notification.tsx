@@ -39,12 +39,12 @@ export default function RewardsNotification({ notification, onDismiss }: Rewards
       const timer = setTimeout(() => {
         handleDismiss()
       }, 5000)
-      
+
       return () => clearTimeout(timer)
     }
   }, [notification, handleDismiss])
 
-  if (!notification || !visible) return null
+  if (!notification) return null
 
   const getIcon = () => {
     switch (notification.type) {
@@ -77,9 +77,8 @@ export default function RewardsNotification({ notification, onDismiss }: Rewards
   }
 
   return (
-    <div className={`fixed top-4 right-4 z-50 transition-all duration-300 transform ${
-      visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-    }`}>
+    <div className={`fixed top-4 right-4 z-50 transition-all duration-300 transform ${visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+      }`}>
       <Card className={`${getColor()} border-0 text-white max-w-sm`}>
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
@@ -90,18 +89,17 @@ export default function RewardsNotification({ notification, onDismiss }: Rewards
               <p className="font-medium text-sm">
                 {notification.message}
               </p>
-              
+
               {notification.type === 'points' && notification.points && (
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary" className="bg-white/20 text-white border-0">
                     +{notification.points} pts
                   </Badge>
                   {notification.pointsType && (
-                    <Badge 
-                      variant="outline" 
-                      className={`border-white/30 text-white ${
-                        notification.pointsType === 'confirmed' ? 'bg-green-500/20' : 'bg-yellow-500/20'
-                      }`}
+                    <Badge
+                      variant="outline"
+                      className={`border-white/30 text-white ${notification.pointsType === 'confirmed' ? 'bg-green-500/20' : 'bg-yellow-500/20'
+                        }`}
                     >
                       {notification.pointsType === 'confirmed' ? (
                         <>
@@ -118,7 +116,7 @@ export default function RewardsNotification({ notification, onDismiss }: Rewards
                   )}
                 </div>
               )}
-              
+
               {notification.type === 'level_up' && notification.level && (
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary" className="bg-white/20 text-white border-0">
@@ -126,7 +124,7 @@ export default function RewardsNotification({ notification, onDismiss }: Rewards
                   </Badge>
                 </div>
               )}
-              
+
               {notification.type === 'achievement' && (
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary" className="bg-white/20 text-white border-0">
@@ -135,7 +133,7 @@ export default function RewardsNotification({ notification, onDismiss }: Rewards
                 </div>
               )}
             </div>
-            
+
             <Button
               variant="ghost"
               size="sm"
