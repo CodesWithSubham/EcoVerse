@@ -18,4 +18,5 @@ export default [
       "unused-imports/no-unused-imports": "warn",
     },
   },
+  { ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"] },
 ];
