@@ -10,6 +10,7 @@ export interface Achievement {
 }
 
 export interface RewardTransaction {
+  _id?: string;
   type: 'earned' | 'redeemed';
   points: number;
   pointsType: 'confirmed' | 'unconfirmed';
