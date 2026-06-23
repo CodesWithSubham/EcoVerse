@@ -308,7 +308,9 @@ export default function ScanPage() {
                   ) : (
                     <div className="rounded-xl border border-cyan-200 bg-white/60 flex flex-col items-center justify-center gap-2 h-48 w-full text-cyan-600">
                       <Scan className="h-10 w-10 opacity-40" />
-                      <span className="text-sm font-medium text-cyan-700">No image available</span>
+                      <span className="text-sm font-medium text-cyan-700">
+                        No image available
+                      </span>
                     </div>
                   )}
                 </div>
@@ -377,7 +379,9 @@ export default function ScanPage() {
                         )}
                       </div>
                     ) : (
-                      <p className="text-cyan-800">No packaging data available.</p>
+                      <p className="text-cyan-800">
+                        No packaging data available.
+                      </p>
                     )}
                   </div>
                 </div>
