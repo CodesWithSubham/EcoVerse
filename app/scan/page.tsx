@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, react/no-unescaped-entities, @typescript-eslint/no-require-imports, react-hooks/exhaustive-deps, @next/next/no-img-element, no-console */
+/* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
 'use client';
 
 import { useState } from 'react';
@@ -48,6 +48,7 @@ export default function ScanPage() {
   const [barcode, setBarcode] = useState('');
   const [product, setProduct] = useState<ProductData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanLock, setScanLock] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -96,6 +97,7 @@ export default function ScanPage() {
     }
 
     setIsLoading(true);
+    setImageError(false);
 
     try {
       const res = await fetch('/api/scan', {
@@ -296,26 +298,19 @@ export default function ScanPage() {
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="flex items-center justify-center">
-                  {product.image ? (
+                  {product.image && !imageError ? (
                     <img
                       src={product.image}
                       alt={product.product}
                       className="rounded-xl object-contain max-h-56 w-full shadow-sm border border-cyan-200 bg-white p-2"
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = '';
-                        e.currentTarget.style.display = 'none';
-                        const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
+                      onError={() => setImageError(true)}
                     />
-                  ) : null}
-                  <div
-                    className="rounded-xl border border-cyan-200 bg-white/60 flex flex-col items-center justify-center gap-2 h-48 w-full text-cyan-600"
-                    style={{ display: product.image ? 'none' : 'flex' }}
-                  >
-                    <Scan className="h-10 w-10 opacity-40" />
-                    <span className="text-sm font-medium text-cyan-700">No image available</span>
-                  </div>
+                  ) : (
+                    <div className="rounded-xl border border-cyan-200 bg-white/60 flex flex-col items-center justify-center gap-2 h-48 w-full text-cyan-600">
+                      <Scan className="h-10 w-10 opacity-40" />
+                      <span className="text-sm font-medium text-cyan-700">No image available</span>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-4">
                   <div>
