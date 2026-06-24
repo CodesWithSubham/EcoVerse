@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime, timedelta, timezone
 from typing import List
 
@@ -28,12 +28,22 @@ class AnalyticsRequest(BaseModel):
     scans: List[ScanItem] = Field(min_length=1, max_length=5000)
 
 class UserRecord(BaseModel):
-    user_id: str
+    # FIX 1A: Ensure user_id cannot be an empty string
+    user_id: str = Field(min_length=1)
     total_emissions_kg: float = Field(ge=0)
 
 class LeaderboardRequest(BaseModel):
     requesting_user_id: str = Field(min_length=1)
     users: List[UserRecord] = Field(min_length=1, max_length=5000)
+
+    # FIX 1B: Validate that all user_ids in the array are completely unique
+    @field_validator("users")
+    @classmethod
+    def validate_unique_user_ids(cls, users: List[UserRecord]) -> List[UserRecord]:
+        ids = [u.user_id for u in users]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Duplicate user_id values are not allowed.")
+        return users
 
 # --- ENDPOINT 1: Estimation ---
 @app.post("/api/estimate")
@@ -126,12 +136,15 @@ async def get_leaderboard(data: LeaderboardRequest):
         for i, u in enumerate(sorted_users[:10])
     ]
 
+    # FIX 2: Group the output into "leaderboard" and "stats" objects for the frontend
     return {
         "success": True,
-        "requesting_user_id": data.requesting_user_id,
-        "user_rank": user_rank,
-        "percentile_score": round(percentile, 1),
-        "global_average_kg": round(global_average, 2),
-        "status_message": f"You are more sustainable than {round(percentile)}% of users!",
-        "top_10_leaderboard": top_10
+        "leaderboard": top_10,
+        "stats": {
+            "requesting_user_id": data.requesting_user_id,
+            "user_rank": user_rank,
+            "percentile_score": round(percentile, 1),
+            "global_average_kg": round(global_average, 2),
+            "status_message": f"You are more sustainable than {round(percentile)}% of users!"
+        }
     }
