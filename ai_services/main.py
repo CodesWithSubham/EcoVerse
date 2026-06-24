@@ -20,13 +20,20 @@ class ProductData(BaseModel):
 class ScanItem(BaseModel):
     product_name: str
     category: str
-    # FIX 1: Ensure carbon footprint cannot be negative
     carbon_footprint_kg: float = Field(ge=0)
     scanned_at: datetime
 
 class AnalyticsRequest(BaseModel):
+    user_id: str = Field(min_length=1)
+    scans: List[ScanItem] = Field(min_length=1, max_length=5000)
+
+class UserRecord(BaseModel):
     user_id: str
-    scans: List[ScanItem]
+    total_emissions_kg: float = Field(ge=0)
+
+class LeaderboardRequest(BaseModel):
+    requesting_user_id: str = Field(min_length=1)
+    users: List[UserRecord] = Field(min_length=1, max_length=5000)
 
 # --- ENDPOINT 1: Estimation ---
 @app.post("/api/estimate")
@@ -52,15 +59,9 @@ async def estimate_carbon(product: ProductData):
 # --- ENDPOINT 2: Analytics & Trends ---
 @app.post("/api/analytics")
 async def get_analytics(data: AnalyticsRequest):
-    """
-    Processes a user's scan history to calculate trends, top emitting categories, 
-    and an overall sustainability score.
-    """
-    # FIX 2: Return a proper HTTP 422 Error if the array is empty
     if not data.scans:
         raise HTTPException(status_code=422, detail="No scan data provided for analytics.")
 
-    # 1. Calculate Top Emitting Category
     category_totals = {}
     total_emissions = 0.0
 
@@ -72,8 +73,6 @@ async def get_analytics(data: AnalyticsRequest):
     top_category = max(category_totals, key=category_totals.get)
     top_category_pct = (category_totals[top_category] / total_emissions) * 100 if total_emissions > 0 else 0
 
-    # 2. Month-over-Month (MoM) Trend Calculation
-    # FIX 3: Make datetime.now() timezone-aware (UTC) to prevent crash
     now = datetime.now(timezone.utc)
     thirty_days_ago = now - timedelta(days=30)
     
@@ -85,7 +84,6 @@ async def get_analytics(data: AnalyticsRequest):
     else:
         mom_change_pct = 0.0
 
-    # 3. Sustainability Score (1-100)
     penalty = (total_emissions / 10.0) * 15  
     score = max(1, min(100, 100 - penalty)) 
 
@@ -100,42 +98,29 @@ async def get_analytics(data: AnalyticsRequest):
         "trend_direction": "worsening" if mom_change_pct > 0 else "improving"
     }
 
-class UserRecord(BaseModel):
-    user_id: str
-    total_emissions_kg: float = Field(ge=0)
-
-class LeaderboardRequest(BaseModel):
-    requesting_user_id: str
-    users: List[UserRecord]
-
-# --- ENDPOINT 3: Gamification & Leaderboard (Paste at the bottom) ---
+# --- ENDPOINT 3: Gamification & Leaderboard ---
 @app.post("/api/leaderboard")
 async def get_leaderboard(data: LeaderboardRequest):
-    """
-    Processes a global array of users to calculate percentiles, averages,
-    and returns the top 10 most sustainable users.
-    """
     if not data.users:
         raise HTTPException(status_code=422, detail="No user data provided.")
 
-    # 1. Sort users by emissions (Lowest emissions = Best Rank)
     sorted_users = sorted(data.users, key=lambda x: x.total_emissions_kg)
-
-    # 2. Calculate Global Average
+    
     total_global_emissions = sum(u.total_emissions_kg for u in data.users)
     global_average = total_global_emissions / len(data.users)
 
-    # 3. Find Requesting User's Stats
-    user_rank = next((index for index, u in enumerate(sorted_users) if u.user_id == data.requesting_user_id), None)
-
-    if user_rank is None:
+    requesting_user = next((u for u in data.users if u.user_id == data.requesting_user_id), None)
+    
+    if requesting_user is None:
         raise HTTPException(status_code=404, detail="Requesting user not found in the dataset.")
 
-    # 4. Calculate Percentile (How many people are they beating?)
-    people_beaten = len(data.users) - (user_rank + 1)
-    percentile = (people_beaten / len(data.users)) * 100 if len(data.users) > 1 else 100.0
+    req_emissions = requesting_user.total_emissions_kg
+    user_rank = 1 + sum(1 for u in data.users if u.total_emissions_kg < req_emissions)
+    people_beaten = sum(1 for u in data.users if u.total_emissions_kg > req_emissions)
+    
+    others = len(data.users) - 1
+    percentile = (people_beaten / others) * 100 if others > 0 else 100.0
 
-    # 5. Generate Top 10 List
     top_10 = [
         {"rank": i + 1, "user_id": u.user_id, "emissions_kg": u.total_emissions_kg} 
         for i, u in enumerate(sorted_users[:10])
@@ -144,7 +129,7 @@ async def get_leaderboard(data: LeaderboardRequest):
     return {
         "success": True,
         "requesting_user_id": data.requesting_user_id,
-        "user_rank": user_rank + 1,
+        "user_rank": user_rank,
         "percentile_score": round(percentile, 1),
         "global_average_kg": round(global_average, 2),
         "status_message": f"You are more sustainable than {round(percentile)}% of users!",
