@@ -216,6 +216,10 @@ export async function POST(req: Request) {
           earnedAt,
         }));
 
+        const isAchievementConfirmed = shouldConfirmImmediately
+          ? shouldConfirmImmediately('achievement')
+          : true;
+
         // Insert each achievement individually via its own findOneAndUpdate
         // (rather than batching into bulkWrite) so the return value of each
         // call tells us, unambiguously, whether THIS write was the one that
@@ -223,6 +227,14 @@ export async function POST(req: Request) {
         // match (already present, whether from this user's own prior scan or
         // a concurrent request that won the race), so we don't double-credit
         // points for it.
+        //
+        // The points $inc and reward transaction $push are folded into this
+        // same write (rather than a separate aggregate update afterward) so
+        // that an achievement is never persisted without its points being
+        // credited in the same atomic operation — closing the crash window
+        // where a failure between two separate writes could leave an
+        // achievement recorded with no way to recover its points, since
+        // checkAchievements skips already-earned IDs on every later scan.
         actuallyInsertedAchievements = [];
         for (const record of achievementRecords) {
           const inserted = await User.findOneAndUpdate(
@@ -230,54 +242,35 @@ export async function POST(req: Request) {
               email: userEmail,
               'achievements.id': { $ne: record.id },
             },
-            { $push: { achievements: record } },
+            {
+              $push: {
+                achievements: record,
+                rewardTransactions: {
+                  _id: new mongoose.Types.ObjectId(),
+                  type: 'earned',
+                  points: record.points,
+                  pointsType: isAchievementConfirmed
+                    ? 'confirmed'
+                    : 'unconfirmed',
+                  reason: 'achievement',
+                  description: `Earned: ${record.name}`,
+                  date: earnedAt,
+                  confirmedAt: isAchievementConfirmed ? earnedAt : null,
+                },
+              },
+              $inc: {
+                rewardPoints: record.points,
+                totalPointsEarned: record.points,
+                confirmedPoints: isAchievementConfirmed ? record.points : 0,
+                unconfirmedPoints: isAchievementConfirmed ? 0 : record.points,
+              },
+            },
             { new: false } // we only need to know whether it matched
           );
           if (inserted) {
             const original = earnedAchievements.find((a) => a.id === record.id);
             if (original) actuallyInsertedAchievements.push(original);
           }
-        }
-
-        const achievementPoints = actuallyInsertedAchievements.reduce(
-          (sum, a) => sum + a.points,
-          0
-        );
-
-        if (achievementPoints > 0) {
-          const isAchievementConfirmed = shouldConfirmImmediately
-            ? shouldConfirmImmediately('achievement')
-            : true;
-
-          await User.updateOne(
-            { email: userEmail },
-            {
-              $inc: {
-                rewardPoints: achievementPoints,
-                totalPointsEarned: achievementPoints,
-                confirmedPoints: isAchievementConfirmed ? achievementPoints : 0,
-                unconfirmedPoints: isAchievementConfirmed
-                  ? 0
-                  : achievementPoints,
-              },
-              $push: {
-                rewardTransactions: {
-                  _id: new mongoose.Types.ObjectId(),
-                  type: 'earned',
-                  points: achievementPoints,
-                  pointsType: isAchievementConfirmed
-                    ? 'confirmed'
-                    : 'unconfirmed',
-                  reason: 'achievement',
-                  description: `Earned: ${actuallyInsertedAchievements
-                    .map((a) => a.name)
-                    .join(', ')}`,
-                  date: earnedAt,
-                  confirmedAt: isAchievementConfirmed ? earnedAt : null,
-                },
-              },
-            }
-          );
         }
       }
 
