@@ -239,7 +239,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateAvatar = async (avatarId: AvatarId): Promise<boolean> => {
-    if (!user) return false;
+    if (!user) {
+      toast({
+        title: 'Avatar not saved',
+        description: 'Please sign in and try again.',
+        variant: 'destructive',
+      });
+      return false;
+    }
 
     const previousUser = { ...user };
 
