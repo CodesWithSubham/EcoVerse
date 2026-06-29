@@ -3,7 +3,6 @@
  */
 
 import { GET, POST } from '../route';
-import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
 jest.mock('@/lib/mongodb', () => {
@@ -23,7 +22,15 @@ jest.mock('@/models/User', () => {
   };
 });
 
+/**
+ * Test suite for the Rewards API endpoints (GET and POST /api/rewards).
+ * Verifies that repeatable reward items are purchaseable multiple times
+ * while one-time unlocks remain protected against duplicates.
+ */
 describe('Rewards API Route', () => {
+  /**
+   * Tests for retrieving available shop rewards (GET /api/rewards).
+   */
   describe('GET /api/rewards', () => {
     it('should return available shop items including repeatable ones even if already purchased', async () => {
       const mockUser = {
@@ -76,6 +83,9 @@ describe('Rewards API Route', () => {
     });
   });
 
+  /**
+   * Tests for redeeming points for shop items (POST /api/rewards/redeem).
+   */
   describe('POST /api/rewards (redeem)', () => {
     beforeEach(() => {
       jest.clearAllMocks();

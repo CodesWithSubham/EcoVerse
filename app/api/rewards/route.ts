@@ -12,7 +12,12 @@ import {
 // Repeatable/consumable shop items that can be purchased multiple times
 const REPEATABLE_ITEMS = ['streak_protector', 'double_points'];
 
-// GET /api/rewards - Get user's complete rewards data
+/**
+ * GET /api/rewards - Get user's complete rewards data
+ * Fetches user's current points, transaction history, achievements, and lists
+ * all available shop items. Injected logic preserves repeatable/consumable
+ * items in the available items list even after purchase.
+ */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const email = req.headers.get('x-user-email');
@@ -190,7 +195,12 @@ export async function GET(req: Request) {
   }
 }
 
-// POST /api/rewards/redeem - Redeem reward points for shop items
+/**
+ * POST /api/rewards/redeem - Redeem reward points for shop items
+ * Validates purchase eligibility and updates user status. Repeatable items (e.g.
+ * streak protectors, double points) bypass duplicate-purchase validation and are
+ * omitted from the unique constraint query in the atomic update.
+ */
 export async function POST(req: Request) {
   const email = req.headers.get('x-user-email');
 
