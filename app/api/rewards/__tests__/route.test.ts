@@ -158,6 +158,32 @@ describe('Rewards API Route', () => {
       const calls = (User.findOneAndUpdate as jest.Mock).mock.calls;
       const filterArg = calls[0][0];
       expect(filterArg['purchasedItems.itemId']).toBeUndefined();
+
+      // Verify actual update payload operations
+      const updateArg = calls[0][1];
+      
+      // 1. Points Deduction
+      expect(updateArg.$inc.confirmedPoints).toBe(-200);
+      expect(updateArg.$inc.rewardPoints).toBe(-200);
+
+      // 2. Consumable Counter Increment
+      expect(updateArg.$inc.streakProtectors).toBe(1);
+
+      // 3. Purchase History Entry and Transaction History Entry
+      expect(updateArg.$push.purchasedItems).toMatchObject({
+        itemId: 'streak_protector',
+        name: 'Streak Protector',
+        cost: 200,
+        category: 'feature',
+        active: true,
+      });
+      expect(updateArg.$push.rewardTransactions).toMatchObject({
+        type: 'redeemed',
+        points: 200,
+        pointsType: 'confirmed',
+        reason: 'item_purchase',
+        description: 'Purchased Streak Protector',
+      });
     });
 
     it('should reject duplicate purchase for one-time items in initial validation', async () => {
