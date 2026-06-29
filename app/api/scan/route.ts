@@ -87,12 +87,14 @@ export async function POST(req: Request) {
       let isConfirmed = false;
       let actuallyInsertedAchievements: any[] = [];
       let updatedUser: any = null;
+      let agedPointsConfirmed = false;
 
       for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         const user = await User.findOne({ email: userEmail });
 
         // Confirm any aged unconfirmed points before computing the response
-        await confirmAgedPoints(userEmail);
+        agedPointsConfirmed =
+          (await confirmAgedPoints(userEmail)) > 0;
 
         if (!user) {
           console.error('❌ No user found with email:', userEmail);
@@ -314,6 +316,13 @@ export async function POST(req: Request) {
           },
           { status: 409 }
         );
+      }
+
+      // Refresh user snapshot if confirmAgedPoints made changes
+      // and achievements/level-up didn't already re-fetch
+      if (agedPointsConfirmed && updatedUser) {
+        const freshUser = await User.findOne({ email: userEmail });
+        if (freshUser) updatedUser = freshUser;
       }
 
       const monthlyBonus = calculateMonthlyBonus
